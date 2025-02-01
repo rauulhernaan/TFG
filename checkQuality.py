@@ -57,15 +57,17 @@ def build_generator(latent_dim, seq_length):
 # Crear modelos
 generator = build_generator(latent_dim, seq_length)
 
-generator.load_weights(os.path.join('generator.h5'))
+#generator.load_weights(os.path.join('generator.h5'))
 
-seqs = generator.predict(tf.random.normal((16, latent_dim)))
+seqs = generator.predict(tf.random.normal((100, latent_dim)))
+
+
 
 # Visualizar secuencias generadas
 # Binarizar secuencias: Umbral en 0.5
 binary_sequences = (seqs > 0.5).astype(int)
 
-
+print(binary_sequences)
 
 def calculate_entropy(sequence):
     """Calcula la entropía de una secuencia binaria."""
@@ -150,3 +152,29 @@ for seq in binary_sequences:
     block_size = 4
     p_value, passed = block_frequency_test(seq, block_size)
     print("Prueba de Frecuencia de Bloques:", "Aprobado" if passed else "Fallado", "| p-valor:", p_value)
+
+
+def binary_entropy(sequence):
+    # Calcular las probabilidades de 0 y 1
+    p0 = np.mean(np.array(sequence) == 0)
+    p1 = np.mean(np.array(sequence) == 1)
+    
+    # Manejo de casos donde p0 o p1 es 0 (para evitar log2(0))
+    if p0 == 0:
+        term0 = 0
+    else:
+        term0 = -p0 * np.log2(p0)
+    
+    if p1 == 0:
+        term1 = 0
+    else:
+        term1 = -p1 * np.log2(p1)
+    
+    # Entropía binaria
+    entropy = term0 + term1
+    return entropy
+
+
+for seq in binary_sequences:
+    entropy = binary_entropy(seq)
+    print(f"Entropía binaria: {entropy:.4f}")

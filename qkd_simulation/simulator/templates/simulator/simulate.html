@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación QKD BB84</title>
+</head>
+<body>
+    <h1>Simulación QKD BB84</h1>
+    <button onclick="runSimulation()">Ejecutar Simulación</button>
+    <div id="results" style="margin-top: 20px;">
+        <h2>Resultados</h2>
+        <p><strong>Clave de Alice:</strong> <span id="alice-key"></span></p>
+        <p><strong>Clave de Bob:</strong> <span id="bob-key"></span></p>
+        <p><strong>QBER:</strong> <span id="qber"></span></p>
+    </div>
+
+    <script>
+        function runSimulation() {
+            fetch('/simulate/')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('alice-key').textContent = data.alice_key;
+                    document.getElementById('bob-key').textContent = data.bob_key;
+                    document.getElementById('qber').textContent = data.qber;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
