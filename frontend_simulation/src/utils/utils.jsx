@@ -5,7 +5,7 @@ axios.defaults.withCredentials = true;
 
 const getCSRFToken = async () => {
   try {
-    const response = await axios.get("http://127.0.0.1:8000/get-csrf-token/");
+    const response = await axios.get("http://localhost:8000/get-csrf-token/");
 
     const csrfToken = document.cookie
       .split("; ")

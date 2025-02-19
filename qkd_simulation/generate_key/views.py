@@ -69,11 +69,11 @@ def generate_key(request):
 
         """Genera una clave, calcula su entropía y realiza pruebas de aleatoriedad."""
         latent_dim = 256
-        data = json.loads(request.body)
-        num_qubits = data.get("message_length", "")*4+4
+        num_qubits = 16*4
         latent_vectors = tf.random.normal((num_qubits, latent_dim))
         generated_sequence = generator.predict(latent_vectors).flatten()
         key = np.round(generated_sequence).astype(int)
+        key_bits = np.random.randint(0, 2, num_qubits)  # Lista de 0s y 1s
         generated_sequence_resize = np.resize(key, num_qubits)
         entropy_value = calculate_entropy(generated_sequence_resize)
         randomness_tests = generate_randomness_tests(generated_sequence_resize)

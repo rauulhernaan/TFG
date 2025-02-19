@@ -28,5 +28,7 @@ urlpatterns = [
     path('encrypt/', simulatorView.encrypt, name='encrypt'),
     path('decrypt/', simulatorView.decrypt, name='decrypt'),
     path('correct/', simulatorView.correct_key, name='correct_key'),
+    path('encryptAES/', simulatorView.encryptAES, name='encryptAES'),
+    path('decryptAES/', simulatorView.decryptAES, name='decryptAES'),
     
 ]

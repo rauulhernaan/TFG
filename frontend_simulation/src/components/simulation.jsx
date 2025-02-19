@@ -1,7 +1,21 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
-
+import { useSnackbar } from "./snackBarComp";
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  CircularProgress,
+  Grid2,
+  Switch,
+  FormControlLabel,
+} from "@mui/material";
+import { motion } from "framer-motion";
 
 const KeyExchange = () => {
   const [loading, setLoading] = useState(false);
@@ -9,225 +23,197 @@ const KeyExchange = () => {
   const [useInterceptor, setUseInterceptor] = useState(false);
   const [possibleCircuits, setPossibleCircuits] = useState([]);
   const [finallyKey, setFinallyKey] = useState(null);
+  const [correctKey, setCorrectKey] = useState(null);
   const [privateKeyAlice, setPrivateKeyAlice] = useState(null);
   const [privateKeyBob, setPrivateKeyBob] = useState(null);
   const [publicKeyAlice, setPublicKeyAlice] = useState(null);
   const [publicKeyBob, setPublicKeyBob] = useState(null);
-
-
-
+  const showSnackbar = useSnackbar();
 
   const location = useLocation();
   const navigate = useNavigate();
   const selectedKey = location.state?.selectedKey;
   const message = location.state?.message;
 
-  const getCSRFToken = () => {
-    return document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("csrftoken="))
-      ?.split("=")[1];
-  };
-
   const handleEncrypt = () => {
-    navigate("/encrypt", { state: { selectedKey: finallyKey, message: message, aliceKey: privateKeyAlice } });
-  };
-
-  const handleShowCircuits = async () => {
-    setLoading(true);
-    try {
-
-      const response = await axios.get(
-        "http://127.0.0.1:8000/show-qcircuits/",
-      );
-      setPossibleCircuits(response.data.show_circuits);
-    } catch (error) {
-      console.error("Error al obtener circuitos:", error);
-    } finally {
-      setLoading(false);
-    }
+    navigate("/encrypt", {
+      state: { selectedKey: correctKey, message: message, aliceKey: privateKeyAlice },
+    });
   };
 
   const handleCorrectKey = async () => {
     setLoading(true);
     try {
-      const response = await axios.post("http://127.0.0.1:8000/correct/", {
-        alice_key: privateKeyAlice,
-        bob_key: privateKeyBob,
+      const response = await axios.post("http://localhost:8000/correct/", {
+        alice_key: results.alice_key,
+        bob_key: results.bob_key,
       });
       setFinallyKey(response.data.corrected_key);
+      setCorrectKey(response.data.corrected_key)
     } catch (error) {
-      console.error("Error correcting key:", error);
+      showSnackbar("Error al corregir la clave", "error");
     }
     setLoading(false);
   };
 
-  const handleStartExchange = async () => {
+  const handleShowCircuits = async () => {
     setLoading(true);
-
     try {
-      if (selectedKey) {
-        const csrfToken = getCSRFToken();
-        if (!csrfToken) {
-          console.error("CSRF token not found");
-          return;
-        }
-
-        const response = await axios.post(
-          "http://127.0.0.1:8000/simulate/",
-          {
-            alice_bits: selectedKey,
-            interceptor: useInterceptor, 
-            message_length: message.length
-          });
-
-        setResults(response.data);
-        setFinallyKey(response.data.bob_key);
-        setPrivateKeyAlice(response.data.private_key_alice)
-        setPrivateKeyBob(response.data.private_key_bob)
-        setPublicKeyAlice(response.data.public_key_alice)
-        setPublicKeyBob(response.data.public_key_bob)
-      }
+      const response = await axios.get("http://localhost:8000/show-qcircuits/");
+      setPossibleCircuits(response.data.show_circuits);
     } catch (error) {
-      console.error("Error al iniciar el intercambio de claves:", error);
+      showSnackbar("Error al obtener circuitos", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!selectedKey) {
-    return (
-      <div style={{ textAlign: "center", marginTop: "2rem" }}>
-        <h1>Error</h1>
-        <p>No se seleccionó ninguna clave. Regresa al generador de claves.</p>
-        <button onClick={() => navigate("/")}>Volver</button>
-      </div>
-    );
-  }
+  const handleStartExchange = async () => {
+    setLoading(true);
+    try {
+      if (selectedKey) {
+        const response = await axios.post("http://localhost:8000/simulate/", {
+          alice_bits: selectedKey,
+          interceptor: useInterceptor,
+        });
+        setResults(response.data);
+        setFinallyKey(response.data.bob_key);
+        setPrivateKeyAlice(response.data.private_key_alice);
+        setPrivateKeyBob(response.data.private_key_bob);
+        setPublicKeyAlice(response.data.public_key_alice);
+        setPublicKeyBob(response.data.public_key_bob);
+      }
+    } catch (error) {
+      showSnackbar("Error al iniciar el intercambio de claves", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const highlightDifferences = (aliceKey, bobKey) => {
+    return aliceKey.split('').map((bit, index) => {
+      if (bit !== bobKey[index]) {
+        return <span key={index} style={{ color: "red", fontWeight: "bold" }}>{bit}</span>;
+      } else {
+        return <span key={index}>{bit}</span>;
+      }
+    });
+  };
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>Intercambio de Claves</h1>
+    <Box
+      sx={{
+        minHeight: "100vh", // Garantiza que la caja ocupe al menos toda la pantalla
+        backgroundImage: "url('/image.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        color: "white",
+        position: "relative",
+        backgroundAttachment: "fixed", // Asegura que la imagen de fondo no se mueva al hacer scroll
+      }}
+    >
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+        }}
+      />
+      <Container sx={{ zIndex: 1, textAlign: "center", maxWidth: "md" }}>
+        <Typography variant="h3" gutterBottom marginTop={1}>
+          Intercambio de Claves BB84
+        </Typography>
+        <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.15)", color: "white", padding: "10px", mt: 3, mb: 3 }}>
+            <CardContent>
+              <Typography variant="body1" paragraph>
+                Esta simulación utiliza el protocolo BB84 para realizar el intercambio de claves cuánticas. A través de este protocolo, Alice y Bob pueden intercambiar una clave secreta con seguridad, incluso si un interceptor está presente en el canal de comunicación. La simulación está implementada con Qiskit, una herramienta de computación cuántica, y la corrección de errores se realiza mediante el uso de un algoritmo de reconciliación.
+              </Typography>
 
-      <button style={styles.button} onClick={handleShowCircuits}>
-        Mostrar Circuitos
-      </button>
+            </CardContent>
+        </Card>
+        {/* Contenedor con los botones alineados horizontalmente */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+          {/* Botón Mostrar Circuitos */}
+          <Button variant="contained" color="secondary" onClick={handleShowCircuits} sx={{ width: "32%" }}>
+            {loading ? <CircularProgress size={24} /> : "Mostrar Circuitos"}
+          </Button>
+          
+          {/* Botón Añadir Interceptor */}
+          <FormControlLabel
+            control={<Switch checked={useInterceptor} onChange={(e) => setUseInterceptor(e.target.checked)} />}
+            label={<Typography>Añadir Interceptor</Typography>}
+            sx={{ width: "32%" }}
+          />
+          
+          {/* Botón Iniciar Intercambio */}
+          <Button variant="contained" color="success" onClick={handleStartExchange} disabled={loading} sx={{ width: "32%" }}>
+            {loading ? <CircularProgress size={24} /> : "Iniciar Intercambio"}
+          </Button>
+        </Box>
 
-
-      {possibleCircuits.length > 0 && (
-        <div>
-          <h2>Circuitos Cuánticos</h2>
-          <div style={styles.circuitContainer}>
+        {possibleCircuits.length > 0 && (
+          <Grid2 container spacing={3} justifyContent="center">
             {possibleCircuits.map((circuit, index) => (
-              <div key={index}>
-                <img src={`data:image/png;base64,${circuit.image}`} alt={`Circuit ${index + 1}` } style={styles.circuitImage} />
-                <p style={{marginLeft: "50px"}}><strong>Bit: </strong> {circuit.bit} | <strong>Base: </strong> {circuit.base}</p>
-              </div>
+              <Grid2 item key={index} xs={12} sm={6} md={4}>
+                <motion.div whileHover={{ scale: 1.05 }}>
+                  <Card sx={{ background: "#ffffffcc" }}>
+                    <CardMedia
+                      component="img"
+                      style={{ width: "100%", height: "auto", maxHeight: "300px" }}
+                      image={`data:image/png;base64,${circuit.image}`}
+                      alt={`Circuit ${index + 1}`}
+                    />
+                    <CardContent>
+                      <Typography variant="body1"><strong>Bit:</strong> {circuit.bit}</Typography>
+                      <Typography variant="body1"><strong>Base:</strong> {circuit.base}</Typography>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid2>
             ))}
-          </div>
-        </div>
-      )}
+          </Grid2>
+        )}
+        
+        {results && (
+          <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.15)", color: "white", padding: "20px", mt: 3, mb: 3 }}>
+            <CardContent>
+              <Typography variant="h5" mb={2} >Resultados</Typography>
+              <Typography><strong>Clave de Alice:</strong> {results.alice_key}</Typography>
+              <Typography><strong>Clave de Bob:</strong> {results.bob_key}</Typography>
+              <Typography><strong>Clave de Alice pública:</strong> {publicKeyAlice}</Typography>
+              <Typography><strong>Clave de Bob pública:</strong> {publicKeyBob}</Typography>
+              <Typography><strong>Clave de Alice privada:</strong> {privateKeyAlice}</Typography>
+              <Typography><strong>Clave de Bob privada:</strong> {privateKeyBob}</Typography>
+              <Typography><strong>Porcentaje de error:</strong> {results.qber?.toFixed(2)}%</Typography>
+              <Typography><strong>Porcentaje de error para la clave publicada:</strong> {results.qber_public?.toFixed(2)}%</Typography>
+              <Typography variant="body1"  mt={2} mb={2}>
+                <strong>Bits diferentes entre las claves de Alice y Bob: </strong>
+                {highlightDifferences(results.alice_key, finallyKey)}
+              </Typography>
 
-      {!results && (
-        <div style={styles.interceptorSection}>
-          <label style={styles.label}>
-            <input
-              type="checkbox"
-              checked={useInterceptor}
-              onChange={(e) => setUseInterceptor(e.target.checked)}
-            />
-            Añadir Interceptor
-          </label>
-        </div>
-      )}
-
-      {!results && (
-        <button style={styles.button} onClick={handleStartExchange} disabled={loading}>
-          {loading ? "Procesando..." : "Iniciar Intercambio"}
-        </button>
-      )}
-      {results && (
-        <div style={styles.results}>
-          <h2>Resultados</h2>
-          <p>
-            <strong>Clave de Alice:</strong> {results.alice_key}
-          </p>
-          <p>
-            <strong>Clave de Bob:</strong> {results.bob_key}
-          </p>
-          <p>
-            <strong>Clave de Alice pública:</strong> {publicKeyAlice}
-          </p>
-          <p>
-            <strong>Clave de Bob pública:</strong> {publicKeyBob}
-          </p>
-          <p>
-            <strong>Clave de Alice privada:</strong> {privateKeyAlice}
-          </p>
-          <p>
-            <strong>Clave de Bob privada:</strong> {privateKeyBob}
-          </p>
-          <p>
-            <strong>Porcentaje de error:</strong> {results.qber.toFixed(2)} %
-          </p>
-          <p>
-            <strong>Porcentaje de error para la clave publicada:</strong> {results.qber_public.toFixed(2)} %
-          </p>
-        </div>
-      )}
-      {results && results.qber.toFixed(2)  && (
-        <div>
-          <button style={styles.button} onClick={handleEncrypt} disabled={loading}>
-            Encriptar el mensaje
-          </button>
-        </div>
-      )}
-
-      {results && (
-        <div>
-          <button style={styles.button} onClick={handleCorrectKey} disabled={loading}>
-            {loading ? "Corrigiendo..." : "Corregir Clave"}
-          </button>
-        </div>
-      )}
-    </div>
+              {/* Botón de Corregir Clave solo si hay resultados */}
+              <Box sx={{ display: "flex", justifyContent: "center", gap: "16px", mt: 2 }}>
+                {correctKey && ( 
+                  <Button variant="contained" color="primary" onClick={handleEncrypt}>
+                    Encriptar el mensaje
+                  </Button>
+                )}
+                <Button variant="contained" color="error" onClick={handleCorrectKey} disabled={loading}>
+                  {loading ? "Corrigiendo..." : "Corregir Clave"}
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        )}
+      </Container>
+    </Box>
   );
-};
-
-const styles = {
-  container: {
-    textAlign: "center",
-    padding: "50px",
-  },
-  title: {
-    fontSize: "28px",
-    marginBottom: "20px",
-  },
-  circuitContainer: {
-    display: "flex",
-    justifyContent: "center",  // Espaciado entre los circuitos
-    alignItems: "center",  // Centrado verticalmente
-    flexWrap: "wrap",  // Para que se ajuste en pantallas más pequeñas
-    gap: "100px",
-  },
-
-  interceptorSection: {
-    marginBottom: "20px",
-  },
-  button: {
-    padding: "10px 20px",
-    fontSize: "16px",
-    backgroundColor: "#28A745",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-    marginBottom: "20px",
-  },
-  results: {
-    marginTop: "30px",
-    textAlign: "left",
-  },
 };
 
 export default KeyExchange;

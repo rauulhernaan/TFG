@@ -12,6 +12,9 @@ from qiskit_aer.noise import NoiseModel
 from qiskit_aer.noise.errors import depolarizing_error
 import tensorflow as tf
 from django.views.decorators.csrf import ensure_csrf_cookie
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+import base64
 
 
 def generate_ia_key(generator, num_qubits, latent_dim=256):
@@ -78,7 +81,6 @@ def simulate(request):
         try:
             data = json.loads(request.body)
             use_interceptor = data.get("interceptor", False)
-            message_length = data.get("message_length", 0)
             alice_bits = np.array([int(bit) for bit in data.get('alice_bits', '')])
         except (json.JSONDecodeError, ValueError):
             return JsonResponse({'error': 'Invalid or missing alice_bits'}, status=400)
@@ -155,10 +157,10 @@ def simulate(request):
         bob_key = ''.join(str(bob_measurements[i]) for i in valid_indices)
         errores = sum(1 for a, b in zip(alice_key, bob_key) if a != b)
 
-        private_key_alice = alice_key[:message_length]
-        private_key_bob = bob_key[:message_length]
-        public_key_alice = alice_key[message_length:]
-        public_key_bob = bob_key[message_length:]
+        private_key_alice = alice_key[:16]
+        private_key_bob = bob_key[:16]
+        public_key_alice = alice_key[16:]
+        public_key_bob = bob_key[16:]
 
         errores_public_key = sum(1 for a, b in zip(public_key_alice, public_key_bob) if a != b)
 
@@ -278,3 +280,48 @@ def decrypt(request):
             return JsonResponse({'message': decrypted_message})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+        
+def encrypt_message(message, key):
+    key = key[:16]
+    cipher = AES.new(key.encode(), AES.MODE_CBC)
+    ct_bytes = cipher.encrypt(pad(message.encode(), AES.block_size))
+    iv = base64.b64encode(cipher.iv).decode()
+    ct = base64.b64encode(ct_bytes).decode()
+    return {"ciphertext": ct, "iv": iv}
+
+def decrypt_message(ciphertext, key, iv):
+    key = key[:16] 
+    cipher = AES.new(key.encode(), AES.MODE_CBC, base64.b64decode(iv))
+    pt = unpad(cipher.decrypt(base64.b64decode(ciphertext)), AES.block_size)
+    return pt.decode()
+
+def encryptAES(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            message = data.get("message", "")
+            key = data.get("key", "")
+
+            if not message or not key:
+                return JsonResponse({'error': 'Missing message or key'}, status=400)
+
+            encrypted_data = encrypt_message(message, key)
+            return JsonResponse(encrypted_data)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+        
+def decryptAES(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            ciphertext = data.get("encrypted_message", "")
+            key = data.get("key", "")
+            iv = data.get("iv", "")
+
+            if not ciphertext or not key or not iv:
+                return JsonResponse({'error': 'Missing ciphertext, key, or IV'}, status=400)
+
+            decrypted_message = decrypt_message(ciphertext, key, iv)
+            return JsonResponse({'message': decrypted_message})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)

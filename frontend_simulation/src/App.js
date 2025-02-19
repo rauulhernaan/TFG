@@ -8,6 +8,7 @@ import KeyGeneration from "./components/generateKey";
 import EncryptionScreen from "./components/encrypt";
 import MessageInput from "./components/message";
 import { getCSRFToken } from "./utils/utils"
+import { SnackbarProvider } from "./components/snackBarComp";
 
 const App = () => {
 
@@ -16,6 +17,7 @@ const App = () => {
   }, []);
 
   return (
+    <SnackbarProvider>
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -25,6 +27,7 @@ const App = () => {
         <Route path="/encrypt" element={<EncryptionScreen />} />
       </Routes>
     </Router>
+    </SnackbarProvider>
   );
 };
 
