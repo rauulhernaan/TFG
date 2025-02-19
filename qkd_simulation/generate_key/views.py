@@ -5,11 +5,10 @@ from scipy.stats import norm
 import numpy as np
 import tensorflow as tf
 from scipy.stats import entropy
-from tensorflow.keras.models import load_model
 import json
 
 # Cargar el modelo de IA
-generator = load_model(os.path.join('../generator.h5'))
+generator = tf.keras.models.load_model(os.path.join('../generator.h5'))
 
 def calculate_entropy(sequence):
     """Calcula la entropía binaria de una secuencia."""
