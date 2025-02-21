@@ -6,6 +6,8 @@ import numpy as np
 import tensorflow as tf
 from scipy.stats import entropy
 import json
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit_aer import Aer
 
 # Cargar el modelo de IA
 generator = tf.keras.models.load_model(os.path.join('../generator3.h5'))
@@ -66,16 +68,23 @@ def generate_randomness_tests(sequence):
 def generate_key(request):
     if request.method == 'POST':
 
-        """Genera una clave, calcula su entropía y realiza pruebas de aleatoriedad."""
-        latent_dim = 256
+        data = json.loads(request.body)
+        use_quantum = data.get("quantum_method", False)
         num_qubits = 16*4
-        latent_vectors = tf.random.normal((num_qubits, latent_dim))
-        generated_sequence = generator.predict(latent_vectors).flatten()
-        key = np.round(generated_sequence).astype(int)
-        key_bits = np.random.randint(0, 2, num_qubits)  # Lista de 0s y 1s
-        generated_sequence_resize = np.resize(key, num_qubits)
-        entropy_value = calculate_entropy(generated_sequence_resize)
-        randomness_tests = generate_randomness_tests(generated_sequence_resize)
+        latent_dim = 256
+
+        if(use_quantum):
+            generated_sequence_resize = generate_key_quantum(num_qubits)
+            entropy_value = calculate_entropy(generated_sequence_resize)
+            randomness_tests = generate_randomness_tests(generated_sequence_resize)
+        else:
+            latent_vectors = tf.random.normal((num_qubits, latent_dim))
+            generated_sequence = generator.predict(latent_vectors).flatten()
+            key = np.round(generated_sequence).astype(int)
+            generated_sequence_resize = np.resize(key, num_qubits)
+            entropy_value = calculate_entropy(generated_sequence_resize)
+            randomness_tests = generate_randomness_tests(generated_sequence_resize)
+
         return JsonResponse({
             "key": ''.join(map(str, generated_sequence_resize)),
             "entropy": float(entropy_value),
@@ -83,3 +92,20 @@ def generate_key(request):
         })
     else:
         return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+
+def generate_key_quantum(num_qubits):
+    qreg_q = QuantumRegister(num_qubits, 'q')
+    creg_c = ClassicalRegister(num_qubits, 'c')
+    circuit = QuantumCircuit(qreg_q, creg_c)
+    for i in range(0, num_qubits):
+        circuit.h(qreg_q[i])
+        circuit.measure(qreg_q[i], creg_c[i])
+
+    simulator = Aer.get_backend('qasm_simulator')
+    shots = 1
+    result = simulator.run(circuit, shots=shots).result()
+    counts = result.get_counts()
+    quantum_sequence = np.array([int(bit) for seq in counts.keys() for bit in seq])
+
+    return quantum_sequence

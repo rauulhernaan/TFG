@@ -16,7 +16,7 @@ q_bits = 16
 qreg_q = QuantumRegister(q_bits, 'q')
 creg_c = ClassicalRegister(q_bits, 'c')
 circuit = QuantumCircuit(qreg_q, creg_c)
-for i in range(0, q_bits) :
+for i in range(0, q_bits):
     circuit.h(qreg_q[i])
     circuit.measure(qreg_q[i], creg_c[i])
 
@@ -24,7 +24,7 @@ for i in range(0, q_bits) :
 # plt.show()
 
 simulator = Aer.get_backend('qasm_simulator')
-shots = 5000
+shots = 10000
 result = simulator.run(circuit, shots=shots).result()
 counts = result.get_counts()
 quantum_sequences = np.array([list(map(int, list(seq))) for seq in counts.keys()])
@@ -51,10 +51,10 @@ plt.title('Probabilidad de obtener 0 y 1 en cada qubit')
 plt.legend()
 plt.show()
 
-generator = tf.keras.models.load_model('generator.h5', compile=False)
+generator = tf.keras.models.load_model('generator3.h5', compile=False)
 
 
-num_sequences = 5000
+num_sequences = 10000
 latent_dim = 256
 
 latent_vectors = tf.random.normal((num_sequences, latent_dim))
