@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-import os
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
@@ -14,7 +13,6 @@ import tensorflow as tf
 from django.views.decorators.csrf import ensure_csrf_cookie
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
-import base64
 
 
 def generate_ia_key(generator, num_qubits, latent_dim=256):
@@ -47,9 +45,8 @@ def show_qcircuits(request):
         
         circuits = show_circuits(possible_bits, possible_bases)
 
-         # Función para visualizar el circuito en base64
         def circuit_to_base64(qc):
-            fig = qc.draw(output='mpl')  # Usar el formato MPL
+            fig = qc.draw(output='mpl')  
             buf = BytesIO()
             fig.savefig(buf, format="png")
             buf.seek(0)
@@ -77,7 +74,6 @@ def show_qcircuits(request):
 def simulate(request):
 
     if request.method == 'POST':
-        # Parsear la clave de Alice del frontend
         try:
             data = json.loads(request.body)
             use_interceptor = data.get("interceptor", False)
@@ -91,7 +87,6 @@ def simulate(request):
         num_qubits = len(alice_bits)
         alice_bases = np.random.choice(['z', 'x'], num_qubits)
 
-        # Crear circuitos de Alice
         def encode_qubits(bits, bases):
             circuits = []
             for bit, base in zip(bits, bases):
@@ -108,7 +103,6 @@ def simulate(request):
         alice_qubits = encode_qubits(alice_bits, alice_bases)
         encoded_qubits = alice_qubits
 
-        # Crear modelo de ruido
         noise_model = NoiseModel()
         depolarizing_prob = 0.05
         error = depolarizing_error(depolarizing_prob, 1)
@@ -117,7 +111,6 @@ def simulate(request):
         simulator = Aer.get_backend('qasm_simulator')
 
         if(use_interceptor):
-            # Intercepción de Eve
             eve_bases = np.random.choice(['z', 'x'], num_qubits)
             intercepted_results = []
 
@@ -134,8 +127,6 @@ def simulate(request):
             encoded_qubits = encode_qubits(intercepted_results, eve_bases)
 
         
-
-        # Bob mide los qubits
         bob_bases = np.random.choice(['z', 'x'], num_qubits)
         bob_results = []
 

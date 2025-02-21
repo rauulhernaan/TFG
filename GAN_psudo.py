@@ -7,39 +7,19 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
 from tensorflow.keras.models import Model
 
-# Generar Secuencias Aleatorias Complejas
-def generate_sequences(num_samples, seq_length):
-    # 1. Secuencias completamente aleatorias
-    pure_random = np.random.randint(0, 2, (num_samples // 3, seq_length))
-
-    # 2. Secuencias con patrones predefinidos (alternancia con ruido)
-    patterned_sequences = np.zeros((num_samples // 3, seq_length))
-    for i in range(num_samples // 3):
-        patterned_sequences[i] = [j % 2 for j in range(seq_length)]  # Alternancia
-    patterned_sequences += np.random.normal(0, 0.1, patterned_sequences.shape)  # Ruido
-    patterned_sequences = np.clip(patterned_sequences, 0, 1).astype(int)
-
-    # 3. Secuencias sesgadas (70% de 1s)
-    biased_sequences = np.random.choice([0, 1], size=(num_samples // 3, seq_length), p=[0.3, 0.7])
-
-    # Combinar y barajar
-    dataset = np.vstack((pure_random, patterned_sequences, biased_sequences))
-    np.random.shuffle(dataset)
-    return dataset
-
-# Parámetros del dataset
 num_samples = 5000
 seq_length = 32
-
-# Generar dataset
-dataset = generate_sequences(num_samples, seq_length)
-
-# Convertir a TensorFlow Dataset
+latent_dim = 256
 batch_size = 64
-tf_dataset = tf.data.Dataset.from_tensor_slices(dataset).batch(batch_size)
+epochs = 50  # Más entrenamiento
 
-tf_dataset = tf_dataset.cache()
-tf_dataset = tf_dataset.prefetch(tf.data.AUTOTUNE)
+def generate_balanced_sequences(num_samples, seq_length):
+    dataset = np.random.choice([0, 1], size=(num_samples, seq_length))  
+    return dataset
+
+dataset = generate_balanced_sequences(num_samples, seq_length)
+tf_dataset = tf.data.Dataset.from_tensor_slices(dataset).batch(batch_size).cache().prefetch(tf.data.AUTOTUNE)
+
 
 plt.figure(figsize=(10, 6))
 for i in range(5):  # Visualizar 5 secuencias
@@ -52,26 +32,22 @@ plt.show()
 print("Secuencia Generada (redondeada):", dataset[1])
 
 
-
-
-latent_dim = 256  # Dimensión del espacio latente
-
 def build_generator(latent_dim, seq_length):
     model = Sequential()
-    model.add(Dense(128, input_dim=latent_dim))  # Más unidades iniciales
+    model.add(Dense(256, input_dim=latent_dim))  # Más unidades iniciales
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    
-    model.add(Dense(256))  # Incrementar gradualmente
+
+    model.add(Dense(512))  # Incrementar gradualmente
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.3))
-    
-    model.add(Dense(128))  # Reducir hacia la salida
+
+    model.add(Dense(256))  # Reducir hacia la salida
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    
-    model.add(Dense(seq_length, activation="sigmoid"))  # Salida final
+
+    model.add(Dense(seq_length, activation='sigmoid'))  # Salida final
     return model
 
 # Crear modelos
@@ -101,14 +77,17 @@ def build_discriminator(seq_length):
 
     model = Sequential()
     model.add(Input(shape=(seq_length,)))  # Entrada con tamaño de la secuencia
-    model.add(Dense(128))                 # Capa densa con 128 unidades
-    model.add(LeakyReLU(0.2))             # Activación LeakyReLU
-    model.add(Dropout(0.3))               # Regularización
+    model.add(Dense(256))                 
+    model.add(LeakyReLU(0.2))             
+    model.add(Dropout(0.3))   
     
+    model.add(Dense(128))                
+    model.add(LeakyReLU(0.2))             
+    model.add(Dropout(0.3))             
+
     model.add(Dense(64))                  # Reducir el tamaño
     model.add(LeakyReLU(0.2))
-    model.add(Dropout(0.3))
-    
+
     model.add(Dense(1, activation="sigmoid"))  # Salida binaria (real o falso)
     return model
 
@@ -123,11 +102,12 @@ discriminator.summary()
 discriminator.predict(seq)
 
 
-g_opt = Adam(learning_rate=0.0001)
-d_opt = Adam(learning_rate=0.00001)
+
+g_opt = Adam(learning_rate=0.0001)  
+d_opt = Adam(learning_rate=0.00005)  
+
 g_loss = BinaryCrossentropy()
 d_loss = BinaryCrossentropy()
-
 tf.random.normal(())
 
 
@@ -192,7 +172,7 @@ randomgan = RandomGAN(generator, discriminator)
 
 randomgan.compile(g_opt, d_opt, g_loss, d_loss)
 
-hist = randomgan.fit(ds, epochs=20)
+hist = randomgan.fit(tf_dataset, epochs=500)
 
 plt.suptitle('Loss')
 plt.plot(hist.history['d_loss'], label='d_loss')
