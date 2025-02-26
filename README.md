@@ -137,8 +137,12 @@ This will launch the frontend at:
 # **Prerequisites**  
 
 - **Backend:**  
-    - - Python 3.x
+    - - Python < 3.13, i use 3.10.9
     - - Dependencies listed in `requirements.txt`
+
+ - **Frontend:**  
+    - - Node.js and npm installed on your system
+   
 
     
 
