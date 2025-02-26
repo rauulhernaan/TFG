@@ -1,0 +1,7 @@
+Django==5.1.6
+django-cors-headers==4.7.0
+matplotlib==3.10.0
+qiskit==1.4.0
+qiskit-aer==0.16.1
+tensorflow==2.18.0
+pycryptodome==3.21.0
