@@ -188,7 +188,6 @@ const KeyExchange = () => {
                 {highlightDifferences(results.alice_key, finallyKey)}
               </Typography>
 
-              {/* Botón de Corregir Clave solo si hay resultados */}
               <Box sx={{ display: "flex", justifyContent: "center", gap: "16px", mt: 2 }}>
                 <Button variant="contained" color="primary" onClick={handleEncrypt}>
                    Encriptar el mensaje
