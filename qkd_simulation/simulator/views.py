@@ -16,11 +16,10 @@ from Crypto.Util.Padding import pad, unpad
 
 
 def generate_ia_key(generator, num_qubits, latent_dim=256):
-    latent_vectors = tf.random.normal((num_qubits, latent_dim))  # Generar ruido latente
-    generated_sequences = generator.predict(latent_vectors)  # Generar secuencias
-    sequence = np.round(generated_sequences).astype(int).flatten()  # Redondear a 0/1
+    latent_vectors = tf.random.normal((num_qubits, latent_dim))
+    generated_sequences = generator.predict(latent_vectors)
+    sequence = np.round(generated_sequences).astype(int).flatten()
     
-    # Repetir o cortar para ajustarse a num_qubits
     return np.resize(sequence, num_qubits)
 
 def show_qcircuits(request):
@@ -142,7 +141,6 @@ def simulate(request):
 
         bob_measurements = np.array(bob_results)
 
-        # Reconciliación de claves
         valid_indices = [i for i in range(num_qubits) if alice_bases[i] == bob_bases[i]]
         alice_key = ''.join(str(alice_bits[i]) for i in valid_indices)
         bob_key = ''.join(str(bob_measurements[i]) for i in valid_indices)
@@ -159,7 +157,6 @@ def simulate(request):
 
         qber_public_key = (errores_public_key / len(public_key_bob)) * 100
 
-        # Resultados en JSON
         return JsonResponse({
             'alice_key': alice_key,
             'bob_key': bob_key,
@@ -190,19 +187,17 @@ def cascade_error_correction(alice_key, bob_key, block_size=4, rounds=3):
 
     for _ in range(rounds):
         indices = np.arange(key_length)
-        np.random.shuffle(indices)  # Barajar los índices para cambiar la partición
+        np.random.shuffle(indices)
 
         for i in range(0, key_length, block_size):
             block_indices = indices[i : i + block_size]
             if len(block_indices) < block_size:
-                continue  # Saltar bloques incompletos
+                continue
 
-            # Calcular paridades
             alice_parity = alice_key[block_indices].sum() % 2
             bob_parity = bob_key[block_indices].sum() % 2
 
             if alice_parity != bob_parity:
-                # Encontrar el bit erróneo usando búsqueda binaria
                 low, high = 0, len(block_indices) - 1
                 while low < high:
                     mid = (low + high) // 2
@@ -210,11 +205,10 @@ def cascade_error_correction(alice_key, bob_key, block_size=4, rounds=3):
                     bob_sub_parity = bob_key[block_indices[low : mid+1]].sum() % 2
 
                     if alice_sub_parity != bob_sub_parity:
-                        high = mid  # Error en la primera mitad
+                        high = mid
                     else:
-                        low = mid + 1  # Error en la segunda mitad
+                        low = mid + 1
                 
-                # Corregir el bit erróneo en Bob
                 bob_key[block_indices[low]] ^= 1
 
     return "".join(map(str, bob_key))
@@ -231,46 +225,46 @@ def correct_key(request):
 
     return JsonResponse({"error": "Invalid request"}, status=400)
 
-def xor_encrypt(message, key):
-    """Cifra un mensaje usando XOR con la clave BB84"""
+# def xor_encrypt(message, key):
+#     """Cifra un mensaje usando XOR con la clave BB84"""
     
-    encrypted = "".join(chr(ord(m) ^ ord(k)) for m, k in zip(message, key))
-    return encrypted
+#     encrypted = "".join(chr(ord(m) ^ ord(k)) for m, k in zip(message, key))
+#     return encrypted
 
-def xor_decrypt(encrypted_message, key):
-    """Descifra un mensaje XOR aplicando XOR nuevamente"""
-    return xor_encrypt(encrypted_message, key)  
+# def xor_decrypt(encrypted_message, key):
+#     """Descifra un mensaje XOR aplicando XOR nuevamente"""
+#     return xor_encrypt(encrypted_message, key)  
 
-def encrypt(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            message = data.get("message", "")
-            key = data.get("key", "")
+# def encrypt(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             message = data.get("message", "")
+#             key = data.get("key", "")
             
 
-            if not message or not key:
-                return JsonResponse({'error': 'Missing message or key'}, status=400)
+#             if not message or not key:
+#                 return JsonResponse({'error': 'Missing message or key'}, status=400)
 
-            encrypted_data = xor_encrypt(message, key)
-            return JsonResponse({"encrypted_message": encrypted_data})
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+#             encrypted_data = xor_encrypt(message, key)
+#             return JsonResponse({"encrypted_message": encrypted_data})
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
         
-def decrypt(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            key = data.get("key", "")
-            encrypted_message = data.get("encrypted_message", "")
+# def decrypt(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             key = data.get("key", "")
+#             encrypted_message = data.get("encrypted_message", "")
 
-            if not key or not key:
-                return JsonResponse({'error': 'Missing message or key'}, status=400)
+#             if not key or not key:
+#                 return JsonResponse({'error': 'Missing message or key'}, status=400)
 
-            decrypted_message = xor_decrypt(key, encrypted_message)
-            return JsonResponse({'message': decrypted_message})
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+#             decrypted_message = xor_decrypt(key, encrypted_message)
+#             return JsonResponse({'message': decrypted_message})
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
         
 def encrypt_message(message, key):
     key = key[:16]

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Box, Button, Typography, CircularProgress, Card, CardContent, LinearProgress, Chip, Divider } from "@mui/material";
 import Grid from '@mui/material/Grid2';
 import { motion } from "framer-motion";
@@ -9,6 +8,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { generateKey } from "../services/keyService";
 
 
 const KeyGenerator = () => {
@@ -22,16 +22,14 @@ const KeyGenerator = () => {
   const message = location.state?.message;
   const showSnackbar = useSnackbar();
 
-  const generateKey = async (useQuantumMethod) => {
+  const handleGenerateKey  = async (useQuantumMethod) => {
     setLoading(true);
     setMethod(useQuantumMethod);
     try {
-      const response = await axios.post("http://localhost:8000/generate-key/", {
-        quantum_method: useQuantumMethod,
-      });
-      setKey(response.data.key);
-      setEntropy(response.data.entropy);
-      setRandomnessTests(response.data.randomness_tests);
+      const data = await generateKey(useQuantumMethod);
+      setKey(data.key);
+      setEntropy(data.entropy);
+      setRandomnessTests(data.randomness_tests);
     } catch (error) {
       showSnackbar("Error al generar la clave", 'error');
     }
@@ -57,7 +55,6 @@ const KeyGenerator = () => {
         position: "relative",
       }}
     >
-      {/* Filtro oscuro */}
       <Box
         sx={{
           position: "absolute",
@@ -116,7 +113,7 @@ const KeyGenerator = () => {
                     variant="contained"
                     color="primary"
                     onClick={() => {
-                      generateKey(true); 
+                      handleGenerateKey(true); 
                     }}
                     disabled={loading}
                     sx={{ mt: 2 }}
@@ -228,7 +225,7 @@ const KeyGenerator = () => {
                     variant="contained"
                     color="primary"
                     onClick={() => {
-                      generateKey(false); 
+                      handleGenerateKey(false); 
                     }}
                     disabled={loading}
                     sx={{ mt: 2 }}

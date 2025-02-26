@@ -19,7 +19,6 @@ const Home = ({ onStart }) => {
         position: "relative",
       }}
     >
-      {/* Filtro de fondo oscuro */}
       <Box
         sx={{
           position: "absolute",

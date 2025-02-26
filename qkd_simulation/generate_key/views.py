@@ -9,16 +9,12 @@ import json
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit_aer import Aer
 
-# Cargar el modelo de IA
 generator = tf.keras.models.load_model(os.path.join('../generator3.h5'))
 
 def calculate_entropy(sequence):
-    """Calcula la entropía binaria de una secuencia."""
-    # Calcular las probabilidades de 0 y 1
     p0 = np.mean(np.array(sequence) == 0)
     p1 = np.mean(np.array(sequence) == 1)
     
-    # Manejo de casos donde p0 o p1 es 0 (para evitar log2(0))
     if p0 == 0:
         term0 = 0
     else:
@@ -29,24 +25,21 @@ def calculate_entropy(sequence):
     else:
         term1 = -p1 * np.log2(p1)
     
-    # Entropía binaria
     entropy = term0 + term1
     return entropy
 
 def monobit_test(sequence):
-    # Convertimos la secuencia a +1 y -1
     seq = np.array(sequence) * 2 - 1
-    # Calculamos la suma y normalizamos
     s = np.sum(seq)
     n = len(sequence)
     s_obs = np.abs(s) / np.sqrt(n)
-    p_value = 2 * (1 - norm.cdf(s_obs))  # Valor p usando la normal estándar
+    p_value = 2 * (1 - norm.cdf(s_obs))
     return p_value
 
 def count_runs(sequence):
-    runs = 1  # Inicia con el primer bit como un "run"
+    runs = 1 
     for i in range(1, len(sequence)):
-        if sequence[i] != sequence[i - 1]:  # Si el bit cambia, es un nuevo "run"
+        if sequence[i] != sequence[i - 1]: 
             runs += 1
     return runs
 
@@ -54,15 +47,13 @@ def runs_test(sequence):
     n = len(sequence)
     expected_runs = 2 * n / 3
     actual_runs = count_runs(sequence)
-    # Verificar si el número de runs está dentro de un rango razonable
     return abs(actual_runs - expected_runs) <= (1.96 * (2 * n / 9) ** 0.5)
 
 def generate_randomness_tests(sequence):
-    """Ejecuta pruebas básicas de aleatoriedad."""
     n = len(sequence)
     monobit_bool = abs(np.sum(sequence) - n / 2) < np.sqrt(n)
     monobit = monobit_test(sequence)
-    runs = runs_test(sequence)  # Ejemplo: verificar si hay secuencias largas de 0 o 1
+    runs = runs_test(sequence) 
     return {"monobit": float(monobit), "monobitBool": bool(monobit_bool), "runs": bool(runs)}
 
 def generate_key(request):

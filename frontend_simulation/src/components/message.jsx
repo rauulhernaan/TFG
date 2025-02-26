@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "./snackBarComp";
 import { Box, Button, TextField, Typography, Paper } from "@mui/material";
 import { motion } from "framer-motion";
-import LockIcon from "@mui/icons-material/Lock"; // Ícono de candado para simbolizar seguridad
+import LockIcon from "@mui/icons-material/Lock";
 
 const MessageInput = () => {
   const [message, setMessage] = useState("");
@@ -30,7 +30,6 @@ const MessageInput = () => {
         position: "relative",
       }}
     >
-      {/* Filtro oscuro */}
       <Box
         sx={{
           position: "absolute",
@@ -43,7 +42,6 @@ const MessageInput = () => {
         }}
       />
 
-      {/* Contenido con animación */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -61,7 +59,6 @@ const MessageInput = () => {
             color: "white",
           }}
         >
-          {/* Icono de seguridad y título */}
           <Box display="flex" flexDirection="column" alignItems="center" mb={2}>
             <LockIcon sx={{ fontSize: 50, color: "#90caf9" }} />
             <Typography variant="h4" gutterBottom>
@@ -69,14 +66,12 @@ const MessageInput = () => {
             </Typography>
           </Box>
 
-          {/* Explicación corta del protocolo */}
           <Typography variant="body1" paragraph sx={{ fontSize: "16px", opacity: 0.8 }}>
             BB84 es un protocolo de distribución cuántica de claves (QKD) que permite
             compartir claves secretas de manera segura. Se basa en la mecánica cuántica para
             prevenir ataques de espionaje.
           </Typography>
 
-          {/* Formulario de ingreso de mensaje */}
           <Typography variant="h5" gutterBottom>
              Escribe tu Mensaje
           </Typography>

@@ -1,6 +1,5 @@
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
-import axios from "axios";
 import { useSnackbar } from "./snackBarComp";
 import {
   Box,
@@ -14,6 +13,7 @@ import {
 import { motion } from "framer-motion";
 import LockIcon from "@mui/icons-material/Lock";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import { encryptMessage, decryptMessage } from "../services/encryptationService";
 
 const EncryptionScreen = () => {
   const location = useLocation();
@@ -29,12 +29,8 @@ const EncryptionScreen = () => {
   const handleEncrypt = async () => {
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:8000/encryptAES/", {
-        message: message,
-        key: alicekey,
-      });
-
-      setEncryptedMessage(response.data);
+      const encryptedData = await encryptMessage(message, alicekey);
+      setEncryptedMessage(encryptedData);
     } catch {
       showSnackbar("Error al encriptar el mensaje", "error");
     } finally {
@@ -45,12 +41,8 @@ const EncryptionScreen = () => {
   const handleDecrypt = async () => {
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:8000/decryptAES/", {
-        encrypted_message: encryptedMessage.ciphertext,
-        key: selectedKey,
-        iv: encryptedMessage.iv,
-      });
-      setDecryptedMessage(response.data.message);
+      const decryptedData = await decryptMessage(encryptedMessage, selectedKey, encryptedMessage.iv);
+      setDecryptedMessage(decryptedData);
     } catch {
       showSnackbar("Ocurrió un error al desencriptar", "error");
     } finally {
@@ -73,7 +65,6 @@ const EncryptionScreen = () => {
         px: 3,
       }}
     >
-      {/* Filtro oscuro */}
       <Box
         sx={{
           position: "absolute",

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSnackbar } from "./snackBarComp";
 import {
@@ -16,6 +15,8 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import { motion } from "framer-motion";
+import { startKeyExchange, correctKey, getQuantumCircuits } from "../services/simulationService";
+
 
 const KeyExchange = () => {
   const [loading, setLoading] = useState(false);
@@ -23,7 +24,6 @@ const KeyExchange = () => {
   const [useInterceptor, setUseInterceptor] = useState(false);
   const [possibleCircuits, setPossibleCircuits] = useState([]);
   const [finallyKey, setFinallyKey] = useState(null);
-  const [correctKey, setCorrectKey] = useState(null);
   const [privateKeyAlice, setPrivateKeyAlice] = useState(null);
   const [privateKeyBob, setPrivateKeyBob] = useState(null);
   const [publicKeyAlice, setPublicKeyAlice] = useState(null);
@@ -37,19 +37,15 @@ const KeyExchange = () => {
 
   const handleEncrypt = () => {
     navigate("/encrypt", {
-      state: { selectedKey: correctKey, message: message, aliceKey: privateKeyAlice },
+      state: { selectedKey: finallyKey, message: message, aliceKey: privateKeyAlice },
     });
   };
 
   const handleCorrectKey = async () => {
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:8000/correct/", {
-        alice_key: results.alice_key,
-        bob_key: results.bob_key,
-      });
-      setFinallyKey(response.data.corrected_key);
-      setCorrectKey(response.data.corrected_key)
+      const data = await correctKey(results.alice_key, results.bob_key);
+      setFinallyKey(data.corrected_key);
     } catch (error) {
       showSnackbar("Error al corregir la clave", "error");
     }
@@ -59,35 +55,30 @@ const KeyExchange = () => {
   const handleShowCircuits = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:8000/show-qcircuits/");
-      setPossibleCircuits(response.data.show_circuits);
+      const circuits = await getQuantumCircuits();
+      setPossibleCircuits(circuits);
     } catch (error) {
       showSnackbar("Error al obtener circuitos", "error");
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const handleStartExchange = async () => {
     setLoading(true);
     try {
       if (selectedKey) {
-        const response = await axios.post("http://localhost:8000/simulate/", {
-          alice_bits: selectedKey,
-          interceptor: useInterceptor,
-        });
-        setResults(response.data);
-        setFinallyKey(response.data.bob_key);
-        setPrivateKeyAlice(response.data.private_key_alice);
-        setPrivateKeyBob(response.data.private_key_bob);
-        setPublicKeyAlice(response.data.public_key_alice);
-        setPublicKeyBob(response.data.public_key_bob);
+        const data = await startKeyExchange(selectedKey, useInterceptor);
+        setResults(data);
+        setFinallyKey(data.bob_key);
+        setPrivateKeyAlice(data.private_key_alice);
+        setPrivateKeyBob(data.private_key_bob);
+        setPublicKeyAlice(data.public_key_alice);
+        setPublicKeyBob(data.public_key_bob);
       }
     } catch (error) {
       showSnackbar("Error al iniciar el intercambio de claves", "error");
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const highlightDifferences = (aliceKey, bobKey) => {
@@ -103,7 +94,7 @@ const KeyExchange = () => {
   return (
     <Box
       sx={{
-        minHeight: "100vh", // Garantiza que la caja ocupe al menos toda la pantalla
+        minHeight: "100vh", 
         backgroundImage: "url('/image.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -112,7 +103,7 @@ const KeyExchange = () => {
         alignItems: "center",
         color: "white",
         position: "relative",
-        backgroundAttachment: "fixed", // Asegura que la imagen de fondo no se mueva al hacer scroll
+        backgroundAttachment: "fixed", 
       }}
     >
       <Box
@@ -137,21 +128,21 @@ const KeyExchange = () => {
 
             </CardContent>
         </Card>
-        {/* Contenedor con los botones alineados horizontalmente */}
+       
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          {/* Botón Mostrar Circuitos */}
+         
           <Button variant="contained" color="secondary" onClick={handleShowCircuits} sx={{ width: "32%" }}>
             {loading ? <CircularProgress size={24} /> : "Mostrar Circuitos"}
           </Button>
           
-          {/* Botón Añadir Interceptor */}
+       
           <FormControlLabel
             control={<Switch checked={useInterceptor} onChange={(e) => setUseInterceptor(e.target.checked)} />}
             label={<Typography>Añadir Interceptor</Typography>}
             sx={{ width: "32%" }}
           />
           
-          {/* Botón Iniciar Intercambio */}
+         
           <Button variant="contained" color="success" onClick={handleStartExchange} disabled={loading} sx={{ width: "32%" }}>
             {loading ? <CircularProgress size={24} /> : "Iniciar Intercambio"}
           </Button>
@@ -199,11 +190,10 @@ const KeyExchange = () => {
 
               {/* Botón de Corregir Clave solo si hay resultados */}
               <Box sx={{ display: "flex", justifyContent: "center", gap: "16px", mt: 2 }}>
-                {correctKey && ( 
-                  <Button variant="contained" color="primary" onClick={handleEncrypt}>
-                    Encriptar el mensaje
-                  </Button>
-                )}
+                <Button variant="contained" color="primary" onClick={handleEncrypt}>
+                   Encriptar el mensaje
+                </Button>
+                
                 <Button variant="contained" color="error" onClick={handleCorrectKey} disabled={loading}>
                   {loading ? "Corrigiendo..." : "Corregir Clave"}
                 </Button>

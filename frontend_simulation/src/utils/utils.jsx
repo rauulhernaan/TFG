@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Configuración para solicitudes CSRF
 axios.defaults.withCredentials = true;
 
 const getCSRFToken = async () => {
