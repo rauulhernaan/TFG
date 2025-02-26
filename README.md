@@ -88,17 +88,6 @@ Navigate to the backend directory and run:
 python -m venv env
 ```
 
-
-
-sh
-Copiar
-Editar
-.\env\Scripts\activate
-On macOS/Linux:
-sh
-Copiar
-Editar
-source env/bin/activate
 ## **Activate the Virtual Environment:**  
 
 - **On Windows:**  
@@ -106,17 +95,50 @@ source env/bin/activate
 - **On macOS/Linux:**  
   - `source env/bin/activate`
 
-## **2️⃣ Create and Activate a Virtual Environment**  
-Navigate to the backend directory and run:
+## **3️⃣ Install Dependencies**  
+Inside the **backend directory**, install all necessary Python packages:
 
 ```sh
-python -m venv env
+pip install -r requirements.txt
 ```
 
-## **2️⃣ Create and Activate a Virtual Environment**  
-Navigate to the backend directory and run:
+## **4️⃣ Run the Backend Server**  
+Start the Django backend with:
 
 ```sh
-python -m venv env
+python manage.py runserver
 ```
+
+This will launch the API at:
+📍 http://localhost:8000/
+
+
+# **🚀 Frontend Setup Instructions**  
+
+## **1️⃣ Install Dependencies**  
+Navigate to the frontend directory and run:
+
+```sh
+npm install
+```
+
+## **2️⃣ Run the Frontend**  
+Start the React development server with:
+
+```sh
+npm start
+```
+
+This will launch the frontend at:
+📍 http://localhost:3000/
+
+
+
+# **Prerequisites**  
+
+- **Backend:**  
+    - - Python 3.x
+    - - Dependencies listed in `requirements.txt`
+
+    
 
