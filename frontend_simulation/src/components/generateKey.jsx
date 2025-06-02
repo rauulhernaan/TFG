@@ -44,7 +44,7 @@ const KeyGenerator = () => {
   return (
     <Box
       sx={{
-        height: "100vh",
+        minHeight: "100vh", 
         backgroundImage: "url('/image.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -53,6 +53,7 @@ const KeyGenerator = () => {
         alignItems: "center",
         color: "white",
         position: "relative",
+        backgroundAttachment: "fixed", 
       }}
     >
       <Box
@@ -73,7 +74,7 @@ const KeyGenerator = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.15)", color: "white", padding: "20px" }}>
+            <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.15)", color: "white", padding: "20px", mt: 3, mb: 3 }}>
               <CardContent>
                 <Divider aria-hidden="true" sx={{ my: 2 }}  >
                     <Chip
@@ -99,7 +100,7 @@ const KeyGenerator = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white", padding: "20px" }}>
+            <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white", padding: "20px", mt: 3, mb: 3 }}>
               <CardContent>
                 <Box sx={{ 
                     display: "flex", 
@@ -185,7 +186,7 @@ const KeyGenerator = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.15)", color: "white", padding: "20px" }}>
+            <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.15)", color: "white", padding: "20px", mt: 3, mb: 3 }}>
               <CardContent>
                 <Divider aria-hidden="true" sx={{ my: 2 }}  >
                     <Chip
@@ -211,7 +212,7 @@ const KeyGenerator = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white", padding: "20px" }}>
+            <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white", padding: "20px", mt: 3, mb: 3 }}>
               <CardContent>
                 <Box sx={{ 
                     display: "flex", 

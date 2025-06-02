@@ -5,6 +5,7 @@ from qiskit_aer.noise.errors import depolarizing_error
 import matplotlib.pyplot as plt
 from io import BytesIO
 import numpy as np
+import random
 import os
 import tensorflow as tf
 import numpy as np
@@ -12,7 +13,6 @@ import scipy.stats as stats
 from math import log2
 
 q_bits = 16
-
 qreg_q = QuantumRegister(q_bits, 'q')
 creg_c = ClassicalRegister(q_bits, 'c')
 circuit = QuantumCircuit(qreg_q, creg_c)
@@ -71,7 +71,7 @@ plt.figure(figsize=(10, 5))
 plt.bar(x - 0.2, prob_zeros, width=0.4, label='P(0)', color='red')
 plt.bar(x + 0.2, prob_ones, width=0.4, label='P(1)', color='green')
 plt.xticks(x, [f'Q{i}' for i in range(q_bits)])
-plt.xlabel('Qubits')
+plt.xlabel('Bits')
 plt.ylabel('Probabilidad')
 plt.title('Probabilidad de obtener 0 y 1 en cada bit (IA Generativa)')
 plt.legend()
@@ -152,16 +152,52 @@ results_q = {
     'monobit': np.mean([monobit_test(seq) for seq in quantum_sequences])
 }
 
+secuencias = []
+for _ in range(shots):
+    # Genera un número entero aleatorio de longitud bits y lo convierte en lista de bits
+    bits = bin(random.getrandbits(q_bits))[2:].zfill(q_bits)
+    secuencia = [int(bit) for bit in bits]
+    secuencias.append(secuencia)
+sec = np.array(secuencias)
+
+print(sec[0], sec[1])
+
+prob_zeros_normal = np.mean(sec == 0, axis=0)
+prob_ones_normal = np.mean(sec == 1, axis=0)
+
+x = np.arange(q_bits)
+plt.figure(figsize=(10, 5))
+plt.bar(x - 0.2, prob_zeros_normal, width=0.4, label='P(0)', color='red')
+plt.bar(x + 0.2, prob_ones_normal, width=0.4, label='P(1)', color='green')
+plt.xticks(x, [f'Q{i}' for i in range(q_bits)])
+plt.xlabel('Bits')
+plt.ylabel('Probabilidad')
+plt.title('Probabilidad de obtener 0 y 1 en cada bit (Tradicional)')
+plt.legend()
+plt.show()
+
+
+results_tradicional = {
+    'runs': np.mean([runs_test(seq) for seq in sec]),
+    'block_freq': np.mean([block_frequency_test(seq) for seq in sec]),
+    'longest_run': np.mean([longest_run_test(seq) for seq in sec]),
+    'entropy': np.mean([shannon_entropy(seq) for seq in sec]),
+    'binary_entropy': np.mean([calculate_entropy(seq) for seq in sec]),
+    'monobit': np.mean([monobit_test(seq) for seq in sec])
+}
+
 labels = list(results_ia.keys())
 values_ia = list(results_ia.values())
 values_q = list(results_q.values())
+values_trad = list(results_tradicional.values())
 
 x = np.arange(len(labels))
-width = 0.35
+width = 0.30
 
 fig, ax = plt.subplots()
-rects1 = ax.bar(x - width/2, values_ia, width, label='IA')
-rects2 = ax.bar(x + width/2, values_q, width, label='Quantum')
+rects1 = ax.bar(x - width, values_ia, width, label='IA')
+rects2 = ax.bar(x , values_q, width, label='Quantum')
+rects3 = ax.bar(x + width, values_trad, width, label='Trad')
 
 ax.set_ylabel('Valores')
 ax.set_title('Comparación de pruebas de aleatoriedad')

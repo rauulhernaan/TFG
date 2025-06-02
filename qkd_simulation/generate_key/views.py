@@ -69,7 +69,7 @@ def generate_key(request):
             entropy_value = calculate_entropy(generated_sequence_resize)
             randomness_tests = generate_randomness_tests(generated_sequence_resize)
         else:
-            latent_vectors = tf.random.normal((num_qubits, latent_dim))
+            latent_vectors = tf.random.normal((2, latent_dim))
             generated_sequence = generator.predict(latent_vectors).flatten()
             key = np.round(generated_sequence).astype(int)
             generated_sequence_resize = np.resize(key, num_qubits)

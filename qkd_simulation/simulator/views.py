@@ -172,7 +172,6 @@ def simulate(request):
     
     else:
         return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
-    
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
